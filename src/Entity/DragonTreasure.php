@@ -35,7 +35,9 @@ use Symfony\Component\Validator\Constraints\Type;
     shortName: 'Treasure',
     description: 'a rare and valuable treasure.',
     operations: [
-        new Get(),
+        new Get(
+            normalizationContext: ['groups' => ['treasure:read', 'treasure:item:get']]
+        ),
         new GetCollection(),
         new Post(),
         new Put(),
@@ -67,7 +69,7 @@ class DragonTreasure
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['treasure:read', 'treasure:write'])]
+    #[Groups(['treasure:read', 'treasure:write', 'user:read'])]
     #[ApiFilter(SearchFilter::class, strategy: 'partial')]
     #[Assert\NotBlank]
     #[Assert\Length(min: 2, max:50, maxMessage: 'Describe your loot in 50 chars or less')]
@@ -82,15 +84,15 @@ class DragonTreasure
      * The estimated value of this treasure, in gold coins.
      */
     #[ORM\Column]
-    #[Groups(['treasure:read', 'treasure:write'])]
+    #[Groups(['treasure:read', 'treasure:write', 'user:read'])]
     #[ApiFilter(RangeFilter::class)]
     #[Assert\GreaterThanOrEqual(0)]
     private ?int $value = 0;
 
     #[ORM\Column]
     #[Groups(['treasure:read', 'treasure:write'])]
-    #[Assert\GreaterThan(0)]
-    #[Assert\LesserThan(11)]
+    #[Assert\GreaterThanOrEqual(0)]
+    #[Assert\LessThanOrEqual(10)]
     private ?int $coolFactor = 0;
 
     #[ORM\Column]
@@ -99,6 +101,11 @@ class DragonTreasure
     #[ORM\Column]
     #[ApiFilter(BooleanFilter::class)]
     private ?bool $isPublished = false;
+
+    #[ORM\ManyToOne(inversedBy: 'dragonTreasures')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['treasure:read', 'treasure:write'])]
+    private ?User $owner = null;
 
     public function __construct(string $name = null)
     {
@@ -196,6 +203,18 @@ class DragonTreasure
     public function setIsPublished(bool $isPublished): static
     {
         $this->isPublished = $isPublished;
+
+        return $this;
+    }
+
+    public function getOwner(): ?User
+    {
+        return $this->owner;
+    }
+
+    public function setOwner(?User $owner): static
+    {
+        $this->owner = $owner;
 
         return $this;
     }

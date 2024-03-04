@@ -14,8 +14,13 @@ class AppFixtures extends Fixture
     public function load(ObjectManager $manager)
     {
         // Utiliser l'usine pour créer 10 instances de DragonTreasure
-        DragonTreasureFactory::new()->createMany(40);
+
         UserFactory::createMany(10);
+        DragonTreasureFactory::new()->createMany(40, function() {
+            return [
+                'owner' => UserFactory::random(),
+            ];
+        });
         // Enregistrer les données dans la base de données
         $manager->flush();
     }
